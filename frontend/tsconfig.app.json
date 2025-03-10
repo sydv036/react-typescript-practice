@@ -13,6 +13,19 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "allowJs": false,
+
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components"],
+      "@assets/*": ["./src/assets"],
+      "@routers/*": ["./src/routers"],
+      "@styles/*": ["./src/styles"],
+      "@services/*": ["./src/services"],
+      "@types/*": ["./src/types"],
+      "@pages/*": ["./src/pages"]
+    },
 
     /* Linting */
     "strict": true,
