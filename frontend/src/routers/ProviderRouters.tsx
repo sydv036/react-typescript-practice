@@ -1,4 +1,5 @@
 import App from "App";
+import AdminApp from "pages/admin/AdminApp";
 import Login from "pages/auth/loginPage";
 import Register from "pages/auth/registerPage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -7,6 +8,10 @@ const ProviderRouters = () => {
     {
       path: "/",
       element: <App />,
+    },
+    {
+      path: "/admin",
+      element: <AdminApp />,
     },
     {
       path: "/login",

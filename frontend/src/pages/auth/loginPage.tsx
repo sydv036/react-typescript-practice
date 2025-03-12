@@ -1,9 +1,32 @@
-import { Button, Col, Divider, Form, Input, Row } from "antd";
+import { App, Button, Col, Divider, Form, Input, Row } from "antd";
 import { MessageIncorrect, MessageNotBlank } from "utils/MessageCommon";
 import "styles/components/auth/login.scss";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCurrentContext } from "hooks/AppContext";
+import { loginAPI } from "services/auth/api.auth";
 
 const Login = () => {
+  const useContext = useCurrentContext();
+  const { message } = App.useApp();
+  const navigate = useNavigate();
+
+  const handleLogin = async (value: ILogin) => {
+    useContext.setIsLoading(true);
+    const res = await loginAPI(value);
+    console.log(res);
+
+    if (res.data) {
+      localStorage.setItem("access_token", res.data.access_token);
+      useContext.setIsAuthenticated(true);
+      useContext.setUser(res.data.user);
+      message.success("Login thành công!");
+      navigate("/");
+    } else {
+      message.error("Login thất bại!");
+    }
+
+    useContext.setIsLoading(false);
+  };
   return (
     <>
       <Row>
@@ -11,7 +34,7 @@ const Login = () => {
           <div className="login-form">
             <fieldset>
               <legend>Login Form</legend>
-              <Form name="loginForm" layout="vertical" onFinish={() => {}}>
+              <Form name="loginForm" layout="vertical" onFinish={handleLogin}>
                 <Form.Item<ILogin>
                   name={"username"}
                   label={"Email"}
@@ -35,7 +58,11 @@ const Login = () => {
                   <Input.Password />
                 </Form.Item>
                 <Form.Item className="btn-auth">
-                  <Button htmlType="submit" type="primary">
+                  <Button
+                    htmlType="submit"
+                    type="primary"
+                    loading={useContext.isLoading}
+                  >
                     Login
                   </Button>
                 </Form.Item>

@@ -1,12 +1,35 @@
-import { Button, Divider, Form, Input } from "antd";
+import { App, Button, Divider, Form, Input } from "antd";
 import { MessageIncorrect, MessageNotBlank } from "utils/MessageCommon";
 import "styles/components/auth/register.scss";
 import { Link } from "react-router-dom";
+import { registerAPI } from "services/auth/api.auth";
+import { useCurrentContext } from "hooks/AppContext";
 
 const Register = () => {
+  const [formRegister] = Form.useForm();
+  const { message, notification } = App.useApp();
+  const useContext = useCurrentContext();
+  const handleRegister = async (value: IRegister) => {
+    useContext.setIsLoading(true);
+    const res = await registerAPI(value);
+    if (res.data) {
+      message.success("Đăng kí User thành công!");
+    } else {
+      notification.error({
+        message: "Đăng kí User thất bại!",
+        description: res.message,
+      });
+    }
+    useContext.setIsLoading(false);
+  };
+
   return (
     <div className="register-form">
-      <Form<IRegister> layout={"vertical"}>
+      <Form<IRegister>
+        form={formRegister}
+        layout={"vertical"}
+        onFinish={handleRegister}
+      >
         <h1 className="orther">Register</h1>
         <Form.Item<IRegister>
           label={"Full Name"}
@@ -35,12 +58,22 @@ const Register = () => {
         <Form.Item<IRegister>
           label={"Phone Number"}
           name={"phone"}
-          rules={[{ required: true, message: MessageNotBlank("Phone Number") }]}
+          rules={[
+            { required: true, message: MessageNotBlank("Phone Number") },
+            // {
+            //   pattern: /(84[3|5|7|8|9])+([0-9]{8})\b/g,
+            //   message: MessageIncorrect("Phone Number Viet Nam"),
+            // },
+          ]}
         >
-          <Input.Password />
+          <Input />
         </Form.Item>
         <Form.Item className="btn-auth">
-          <Button htmlType="submit" type="primary">
+          <Button
+            htmlType="submit"
+            type="primary"
+            loading={useContext.isLoading}
+          >
             Register
           </Button>
         </Form.Item>

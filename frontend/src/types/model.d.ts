@@ -11,4 +11,12 @@ declare global {
     password: string;
     phone: string;
   }
+  interface IUser {
+    id: string;
+    email: string;
+    phone: string;
+    fullName: string;
+    role: string;
+    avatar: string;
+  }
 }

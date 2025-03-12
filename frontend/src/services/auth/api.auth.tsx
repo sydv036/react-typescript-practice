@@ -1,9 +1,13 @@
 import axios from "services/api.customize";
 
-const registerAPI = async (data: IRegister) => {
+const registerAPI = (data: IRegister) => {
   const BACKEND_URL = "/api/v1/user/register";
-  const res = await axios.post(BACKEND_URL, data);
-  return res;
+  return axios.post<IBackendRes<IResRegister>>(BACKEND_URL, data);
 };
 
-export { registerAPI };
+const loginAPI = (data: ILogin) => {
+  const BACKEND_URL = "/api/v1/auth/login";
+  return axios.post<IBackendRes<IResLogin>>(BACKEND_URL, data);
+};
+
+export { registerAPI, loginAPI };
