@@ -14,3 +14,8 @@
     justify-content: center;
   }
 }
+
+@mixin layoutMain {
+  width: $with-main;
+  margin: 0 auto;
+}
