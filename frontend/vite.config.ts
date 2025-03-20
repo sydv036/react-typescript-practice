@@ -8,4 +8,19 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `
+          @use "@/styles/_variables.scss" as *;
+          @use "@/styles/_mixins.scss" as *;
+        `,
+      },
+    },
+  },
 });
