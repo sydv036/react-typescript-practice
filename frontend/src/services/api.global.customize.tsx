@@ -9,6 +9,12 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
   function (config) {
+    if (window && window.localStorage) {
+      const access_token = localStorage.getItem("access_token")
+        ? localStorage.getItem("access_token")
+        : null;
+      config.headers.Authorization = `Bearer ${access_token}`;
+    }
     return config;
   },
   function (error) {
