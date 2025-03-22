@@ -9,4 +9,10 @@ declare global {
     access_token: string;
     user: T;
   }
+  interface IRegister {
+    fullName: string;
+    email: string;
+    password: string;
+    phone: string;
+  }
 }
