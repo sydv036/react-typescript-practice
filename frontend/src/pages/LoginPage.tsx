@@ -1,11 +1,28 @@
 import { MessageIncorect, MessageNotBlank } from "@utils/MessageCommon";
-import { Button, Col, Form, Input, Row } from "antd";
+import { App, Button, Col, Form, Input, Row } from "antd";
 import "@styles/pages/login.scss";
 import { ApiLogin } from "@services/api.auth";
+import { CurrentContext } from "@hooks/CurrentAppContext";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 const LoginPage = () => {
+  const [isLoadingLogin, setIsLoadingLogin] = useState<boolean>(false);
+  const currentApp = CurrentContext();
+  const { message } = App.useApp();
+  const navigate = useNavigate();
   const handleSubmitForm = async (data: ILogin) => {
+    setIsLoadingLogin(true);
     const res = await ApiLogin(data);
-    console.log("check login res", res);
+    if (res.data) {
+      currentApp?.setIsAuthenticated(true);
+      currentApp?.setUser(res.data.user);
+      localStorage.setItem("access_token", res.data.access_token);
+      message.success("Login successed!");
+      navigate("/");
+    } else {
+      message.error("Login failed!");
+    }
+    setIsLoadingLogin(false);
   };
   return (
     <>
@@ -51,7 +68,11 @@ const LoginPage = () => {
             </Col>
             <Col span={24}>
               <Form.Item className="btn-auth">
-                <Button type="primary" htmlType="submit">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isLoadingLogin}
+                >
                   Login
                 </Button>
               </Form.Item>

@@ -17,7 +17,7 @@ declare global {
   interface IResBackend<T> {
     statusCode: number;
     message?: string;
-    data?: T;
+    data: T;
   }
   interface IModelPagination<T> {
     meta: {
