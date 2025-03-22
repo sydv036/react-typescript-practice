@@ -28,4 +28,8 @@ declare global {
     };
     result?: T;
   }
+
+  interface IFetchUser {
+    user?: IUser;
+  }
 }
