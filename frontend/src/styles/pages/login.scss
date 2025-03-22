@@ -1,0 +1,12 @@
+.main-login {
+  @include displayCenterScreen();
+  width: $with-auth;
+  //   border: $line-border-auth solid $color-border-auth;
+  border-radius: $border-radius-auth;
+  box-shadow: $box-shadow-auth;
+  padding: 10px;
+  .btn-auth {
+    display: flex;
+    justify-content: center;
+  }
+}

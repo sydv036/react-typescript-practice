@@ -14,4 +14,18 @@ declare global {
     isAuthenticated: boolean;
     setIsAuthenticated: (v: boolean) => void;
   }
+  interface IResBackend<T> {
+    statusCode: number;
+    message?: string;
+    data?: T;
+  }
+  interface IModelPagination<T> {
+    meta: {
+      current: string;
+      pageSize: string;
+      pages: number;
+      total: number;
+    };
+    result?: T;
+  }
 }

@@ -1,11 +1,12 @@
 import App from "App";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PrivateRouters } from "./PrivateRouter";
+import LoginPage from "@pages/LoginPage";
 
 const RouterProviders = () => {
   const routers = createBrowserRouter([
     { path: "/", element: <App /> },
-    { path: "/login", element: <div>login</div> },
+    { path: "/login", element: <LoginPage /> },
     { path: "/register", element: <div>register</div> },
     {
       path: "/admin",
