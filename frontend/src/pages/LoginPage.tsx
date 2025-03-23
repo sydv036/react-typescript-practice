@@ -1,10 +1,10 @@
 import { MessageIncorect, MessageNotBlank } from "@utils/MessageCommon";
-import { App, Button, Col, Form, Input, Row } from "antd";
+import { App, Button, Col, Divider, Form, Input, Row } from "antd";
 import "@styles/pages/login.scss";
 import { ApiLogin } from "@services/api.auth";
 import { CurrentContext } from "@hooks/CurrentAppContext";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 const LoginPage = () => {
   const [isLoadingLogin, setIsLoadingLogin] = useState<boolean>(false);
   const currentApp = CurrentContext();
@@ -79,6 +79,11 @@ const LoginPage = () => {
             </Col>
           </Row>
         </Form>
+        <Divider>Or</Divider>
+        <section className="other">
+          <span>Your haven't account? </span>
+          <Link to={"/register"}>Register</Link>
+        </section>
       </main>
     </>
   );
