@@ -15,4 +15,9 @@ declare global {
     password: string;
     phone: string;
   }
+  interface IResRegister {
+    _id: string;
+    email: string;
+    fullName: string;
+  }
 }

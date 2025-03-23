@@ -1,0 +1,13 @@
+.main-register {
+  @include displayCenterScreen();
+  width: $with-auth;
+  box-shadow: $box-shadow-auth;
+  border-radius: $border-radius-auth;
+  padding: $padding-auth;
+  .btn-auth,
+  .other {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
