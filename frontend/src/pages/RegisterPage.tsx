@@ -1,16 +1,26 @@
 import { MessageIncorect, MessageNotBlank } from "@utils/MessageCommon";
-import { Button, Col, Divider, Form, Input, Row } from "antd";
+import { App, Button, Col, Divider, Form, Input, Row } from "antd";
 import "@styles/pages/register.scss";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ApiRegister } from "@services/api.auth";
 import { useState } from "react";
 
 const RegisterPage = () => {
   const [isLoadingRegister, setIsLoadingRegister] = useState<boolean>(false);
-
+  const { message, notification } = App.useApp();
+  const navigate = useNavigate();
   const handleRegister = async (data: IRegister) => {
     setIsLoadingRegister(true);
     const res = await ApiRegister(data);
+    if (res.data) {
+      message.success("Registered successfully");
+      navigate("/login");
+    } else {
+      notification.error({
+        message: "Failed to registered",
+        description: res.message,
+      });
+    }
     console.log("check res", res);
     setIsLoadingRegister(false);
   };
