@@ -1,0 +1,16 @@
+header {
+  width: 100%;
+  height: $height-header-client;
+  //   box-shadow: 0 0 1px rgb(240, 238, 238);
+  display: flex;
+  align-items: center;
+  .layout-header .item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .text-account {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    text-transform: uppercase;
+  }
+}
