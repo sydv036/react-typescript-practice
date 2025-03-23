@@ -18,6 +18,9 @@ instance.interceptors.request.use(
     return config;
   },
   function (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    }
     return Promise.reject(error);
   }
 );
@@ -30,6 +33,9 @@ instance.interceptors.response.use(
     return response;
   },
   function (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    }
     return Promise.reject(error);
   }
 );
