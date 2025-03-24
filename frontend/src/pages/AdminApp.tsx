@@ -7,10 +7,23 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Button, Dropdown, Layout, Menu, MenuProps, theme } from "antd";
-import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import {
+  App,
+  Avatar,
+  Button,
+  Dropdown,
+  Layout,
+  Menu,
+  MenuProps,
+  Spin,
+  theme,
+} from "antd";
+import React, { useState } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import "@styles/pages/admin-app.scss";
+import { HandleLogout } from "@utils/HandleLogout";
+import { ApiLogout } from "@services/api.auth";
+import { CurrentContext } from "@hooks/CurrentAppContext";
 
 const { Header, Sider, Content } = Layout;
 
@@ -37,33 +50,71 @@ const itemsMenu = [
     label: "Other",
   },
 ];
-const arrMenuInfo = [
-  <Link to={"/"}>
-    <HomeOutlined /> Home Page
-  </Link>,
-  <Link to={"/admin/user"}>
-    <UserOutlined /> User Management
-  </Link>,
-  <Link to={"/admin/book"}>
-    <BookOutlined /> Book Management
-  </Link>,
-  <div
-    onClick={() => {
-      alert("handle logout");
-    }}
-  >
-    <LogoutOutlined /> Logout
-  </div>,
-];
-const items: MenuProps["items"] = arrMenuInfo.map((item, index) => {
-  return { key: index + 1, label: item };
-});
 
 const AdminApp = () => {
+  const { message, notification } = App.useApp();
+  const navigate = useNavigate();
+  const currentApp = CurrentContext();
   const [collapsed, setCollapsed] = useState(false);
+  const [isLoadingLogout, setIsLoadingLogout] = useState<boolean>(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const HandleLogout = async () => {
+    setIsLoadingLogout(true);
+    const res = await ApiLogout();
+    if (res.data) {
+      localStorage.removeItem("access_token");
+      message.success("Logout successfully!");
+      currentApp?.setIsAuthenticated(false);
+      currentApp?.setUser(null);
+      navigate("/login");
+    } else {
+      notification.error({
+        description: "Notification!",
+        message: "An error occurred",
+        duration: 3,
+        showProgress: true,
+      });
+    }
+    setIsLoadingLogout(false);
+  };
+  const items: MenuProps["items"] = [
+    {
+      key: 1,
+      label: <Link to={"/"}>Home Page</Link>,
+      icon: <HomeOutlined />,
+    },
+    {
+      key: 2,
+      label: <Link to={"/admin/user"}>User Management</Link>,
+      icon: <UserOutlined />,
+    },
+    {
+      key: 3,
+      label: <Link to={"/admin/book"}>Book Management</Link>,
+      icon: <BookOutlined />,
+    },
+    {
+      key: 4,
+      label: (
+        <Spin spinning={isLoadingLogout}>
+          <div
+            onClick={() => {
+              // alert("handle logout");
+              HandleLogout();
+            }}
+          >
+            Logout
+          </div>
+        </Spin>
+      ),
+      icon: <LogoutOutlined />,
+      danger: true,
+      disabled: isLoadingLogout,
+    },
+  ];
 
   return (
     <Layout>

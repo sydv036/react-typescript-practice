@@ -8,7 +8,7 @@ declare global {
   }
   interface IAppContext {
     user: IUser | null;
-    setUser: (v: IUser) => void;
+    setUser: (v: IUser | null) => void;
     isLoading: boolean;
     setIsLoading: (v: boolean) => void;
     isAuthenticated: boolean;

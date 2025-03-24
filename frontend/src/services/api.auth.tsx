@@ -13,3 +13,8 @@ export const ApiRegister = (data: IRegister) => {
   const URL_BACKEND = "/api/v1/user/register";
   return axios.post<IResBackend<IResRegister>>(URL_BACKEND, data);
 };
+
+export const ApiLogout = () => {
+  const URL_BACKEND = "/api/v1/auth/logout";
+  return axios.post<IResBackend<string>>(URL_BACKEND);
+};
