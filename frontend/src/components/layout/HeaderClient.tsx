@@ -20,9 +20,11 @@ import {
 import { CurrentContext } from "@hooks/CurrentAppContext";
 import { ButtonLoginNow } from "./components/ButtonLoginNow";
 import CartProducts from "./components/CartProducts";
+import { DisplayImage } from "@utils/DisplayImage";
+import { Link } from "react-router-dom";
 const items: MenuProps["items"] = [
   {
-    label: "Admin manager",
+    label: <Link to={"/admin"}>Admin manager</Link>,
     key: "1",
     icon: <LaptopOutlined />,
   },
@@ -32,7 +34,15 @@ const items: MenuProps["items"] = [
     icon: <ProfileOutlined />,
   },
   {
-    label: "Logout",
+    label: (
+      <span
+        onClick={() => {
+          alert("logout check");
+        }}
+      >
+        Logout
+      </span>
+    ),
     key: "3",
     icon: <LogoutOutlined />,
     danger: true,
@@ -50,7 +60,17 @@ const HeaderClient = () => {
               <HomeOutlined style={{ fontSize: "30px", cursor: "pointer" }} />
             </Col>
             <Col span={12} className="item">
-              <Input type="search" />
+              <Input
+                allowClear
+                type="search"
+                onKeyDown={(e) => {
+                  console.log("check ", e);
+
+                  if (e.key === "Enter" && e.target.value.trim() != "") {
+                    alert("oke enter");
+                  }
+                }}
+              />
             </Col>
             <Col span={4} className="item">
               <Tooltip
@@ -65,13 +85,16 @@ const HeaderClient = () => {
               </Tooltip>
             </Col>
             <Col span={4} className="item">
-              {!currentApp?.user ? (
+              {currentApp?.user ? (
                 <Dropdown
                   menu={{ items }}
                   placement="bottom"
-                  trigger={["hover"]}
+                  trigger={["click"]}
                 >
-                  <Avatar src="https://api.dicebear.com/7.x/miniavs/svg?seed=1" />
+                  {/* <Avatar src="https://api.dicebear.com/7.x/miniavs/svg?seed=1" /> */}
+                  <Avatar
+                    src={DisplayImage("avatar", currentApp.user.avatar)}
+                  />
                 </Dropdown>
               ) : (
                 <Tooltip
