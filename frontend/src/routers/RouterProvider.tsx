@@ -4,6 +4,7 @@ import { PrivateRouters } from "./PrivateRouter";
 import LoginPage from "@pages/LoginPage";
 import RegisterPage from "@pages/RegisterPage";
 import AdminApp from "@pages/AdminApp";
+import UserTable from "@components/admin/user/user.table";
 
 const RouterProviders = () => {
   const routers = createBrowserRouter([
@@ -24,7 +25,7 @@ const RouterProviders = () => {
         },
         {
           path: "user",
-          element: <div>User manager</div>,
+          element: <UserTable />,
         },
         {
           path: "book",

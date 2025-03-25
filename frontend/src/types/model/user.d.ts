@@ -9,4 +9,17 @@ declare global {
     avatar: string;
     id: string;
   }
+
+  interface IUserTable {
+    type: string;
+    _id: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    role: string;
+    avatar: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
 }

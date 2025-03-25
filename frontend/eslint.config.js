@@ -24,5 +24,11 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
     },
+    eslintConfig: {
+      extends: "react-app",
+      rules: {
+        "no-unused-vars": "off",
+      },
+    },
   }
 );
