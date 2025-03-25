@@ -21,7 +21,6 @@ import {
 import React, { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import "@styles/pages/admin-app.scss";
-import { HandleLogout } from "@utils/HandleLogout";
 import { ApiLogout } from "@services/api.auth";
 import { CurrentContext } from "@hooks/CurrentAppContext";
 
@@ -55,8 +54,9 @@ const AdminApp = () => {
   const { message, notification } = App.useApp();
   const navigate = useNavigate();
   const currentApp = CurrentContext();
-  const [collapsed, setCollapsed] = useState(false);
   const [isLoadingLogout, setIsLoadingLogout] = useState<boolean>(false);
+  const [collapsed, setCollapsed] = useState(false);
+
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -102,7 +102,6 @@ const AdminApp = () => {
         <Spin spinning={isLoadingLogout}>
           <div
             onClick={() => {
-              // alert("handle logout");
               HandleLogout();
             }}
           >

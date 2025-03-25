@@ -8,6 +8,7 @@ import {
   ShoppingCartOutlined,
 } from "@ant-design/icons";
 import {
+  App,
   Avatar,
   Badge,
   Col,
@@ -15,42 +16,72 @@ import {
   Input,
   MenuProps,
   Row,
+  Spin,
   Tooltip,
 } from "antd";
 import { CurrentContext } from "@hooks/CurrentAppContext";
 import { ButtonLoginNow } from "./components/ButtonLoginNow";
 import CartProducts from "./components/CartProducts";
 import { DisplayImage } from "@utils/DisplayImage";
-import { Link } from "react-router-dom";
-const items: MenuProps["items"] = [
-  {
-    label: <Link to={"/admin"}>Admin manager</Link>,
-    key: "1",
-    icon: <LaptopOutlined />,
-  },
-  {
-    label: "Profile",
-    key: "2",
-    icon: <ProfileOutlined />,
-  },
-  {
-    label: (
-      <span
-        onClick={() => {
-          alert("logout check");
-        }}
-      >
-        Logout
-      </span>
-    ),
-    key: "3",
-    icon: <LogoutOutlined />,
-    danger: true,
-  },
-];
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { ApiLogout } from "@services/api.auth";
 
 const HeaderClient = () => {
   const currentApp = CurrentContext();
+  const { message, notification } = App.useApp();
+  const navigate = useNavigate();
+  const [isLoadingLogout, setIsLoadingLogout] = useState<boolean>(false);
+
+  const HandleLogout = async () => {
+    setIsLoadingLogout(true);
+    const res = await ApiLogout();
+    if (res.data) {
+      localStorage.removeItem("access_token");
+      message.success("Logout successfully!");
+      currentApp?.setIsAuthenticated(false);
+      currentApp?.setUser(null);
+      navigate("/login");
+    } else {
+      notification.error({
+        description: "Notification!",
+        message: "An error occurred",
+        duration: 3,
+        showProgress: true,
+      });
+    }
+    setIsLoadingLogout(false);
+  };
+
+  const items: MenuProps["items"] = [
+    {
+      label: <Link to={"/admin"}>Admin manager</Link>,
+      key: "1",
+      icon: <LaptopOutlined />,
+    },
+    {
+      label: "Profile",
+      key: "2",
+      icon: <ProfileOutlined />,
+    },
+    {
+      label: (
+        <Spin spinning={isLoadingLogout}>
+          <div
+            onClick={() => {
+              HandleLogout();
+            }}
+          >
+            Logout
+          </div>
+        </Spin>
+      ),
+      key: "3",
+      icon: <LogoutOutlined />,
+      danger: true,
+    },
+  ];
+
   return (
     <>
       <header>
