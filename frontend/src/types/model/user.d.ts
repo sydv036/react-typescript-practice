@@ -22,4 +22,19 @@ declare global {
     createdAt: string;
     updatedAt: string;
   }
+
+  interface IUserInsert {
+    fullName: string;
+    email: string;
+    phone: string;
+    password: string;
+  }
+  interface IUserUpdate {
+    _id: string;
+    fullName: string;
+    password: string;
+  }
+  interface IUserInsertOrUpdate extends IUserInsert {
+    _id: string;
+  }
 }

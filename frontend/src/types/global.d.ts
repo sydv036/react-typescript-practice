@@ -33,4 +33,16 @@ declare global {
   interface IFetchUser {
     user?: IUser;
   }
+
+  interface IResUpdateData {
+    acknowledged: boolean;
+    modifiedCount: number;
+    upsertedId?: string;
+    upsertedCount: number;
+    matchedCount: number;
+  }
+  interface IResDeleteData {
+    acknowledged: boolean;
+    deletedCount: number;
+  }
 }

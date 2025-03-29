@@ -6,10 +6,10 @@ import {
 } from "@ant-design/icons";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { ProTable } from "@ant-design/pro-components";
-import { Button, Dropdown, Popconfirm } from "antd";
+import { App, Button, Dropdown, Popconfirm, Spin } from "antd";
 import { useRef, useState } from "react";
 import "@styles/components/admin/user/user.scss";
-import { ApiGetUserPagination } from "@services/api.user";
+import { ApiDeleteUser, ApiGetUserPagination } from "@services/api.user";
 import { DEFAULT_PAGE_SIZE } from "@utils/ValueConstant";
 import UserModalInsertOrUpdate from "./user.modal";
 
@@ -45,8 +45,6 @@ const handleFilterAndSort = (params: IFilterAndSort, sort: ISort, filter) => {
   } else {
     query += `&sort=-createdAt`;
   }
-  console.log("check query:", query);
-
   return query;
 };
 
@@ -58,9 +56,27 @@ const UserTable = () => {
   const reloadTableUser = () => {
     actionRef.current?.reload();
   };
+
+  const [userDetail, setUserDetail] = useState<IUserTable | null>(null);
+
+  const { message } = App.useApp();
+
+  const [isLoadingDel, setIsLoadingDel] = useState<boolean>(false);
+
   const hanldeClickType = (v: TActionType) => {
     setIsOpenModalUpdateInsert(true);
     setModalType(v);
+  };
+  const handleDeleteUser = async (id: string) => {
+    setIsLoadingDel(true);
+    const res = await ApiDeleteUser(id);
+    if (res.data && res.data?.deletedCount! > 0) {
+      message.success("Deleted successfully!");
+      reloadTableUser();
+    } else {
+      message.error(res.message);
+    }
+    setIsLoadingDel(false);
   };
 
   const columns: ProColumns<IUserTable>[] = [
@@ -135,26 +151,32 @@ const UserTable = () => {
       render(dom, entity, index, action, schema) {
         return (
           <div className="user-action">
-            <a>
-              <EditOutlined
-                onClick={() => {
-                  hanldeClickType("UPDATE");
+            <Spin spinning={isLoadingDel} size="small">
+              <a>
+                <EditOutlined
+                  onClick={() => {
+                    hanldeClickType("UPDATE");
+                    setUserDetail(entity);
+                  }}
+                  className="icon-update"
+                />
+              </a>
+            </Spin>
+
+            <Spin spinning={isLoadingDel} size="small">
+              <Popconfirm
+                placement="left"
+                title={"Are you sure to delete this task?"}
+                description={"Delete the task"}
+                okText="Yes"
+                cancelText="No"
+                onConfirm={() => {
+                  handleDeleteUser(entity._id);
                 }}
-                className="icon-update"
-              />
-            </a>
-            <Popconfirm
-              placement="left"
-              title={"Are you sure to delete this task?"}
-              description={"Delete the task"}
-              okText="Yes"
-              cancelText="No"
-              onConfirm={() => {
-                alert(`Okay ${entity._id}`);
-              }}
-            >
-              <DeleteOutlined className="icon-delete" />
-            </Popconfirm>
+              >
+                <DeleteOutlined className="icon-delete" />
+              </Popconfirm>
+            </Spin>
           </div>
         );
       },
@@ -187,9 +209,9 @@ const UserTable = () => {
           defaultValue: {
             option: { fixed: "right", disable: true },
           },
-          onChange(value) {
-            console.log("value: ", value);
-          },
+          // onChange(value) {
+          //   console.log("value: ", value);
+          // },
         }}
         rowKey="id"
         search={{
@@ -202,7 +224,7 @@ const UserTable = () => {
         }}
         pagination={{
           pageSize: DEFAULT_PAGE_SIZE,
-          onChange: (page) => console.log(page),
+          // onChange: (page) => console.log(page),
         }}
         dateFormatter="string"
         headerTitle="User List"
@@ -243,6 +265,8 @@ const UserTable = () => {
         setIsOpenModalUpdateInsert={setIsOpenModalUpdateInsert}
         reloadTableUser={reloadTableUser}
         modalType={modalType}
+        userDetail={userDetail!}
+        setUserDetail={setUserDetail}
       />
     </>
   );
