@@ -45,4 +45,18 @@ declare global {
     acknowledged: boolean;
     deletedCount: number;
   }
+  interface IResBulkInsertDataErr {
+    err: {
+      index: number;
+      code: number;
+      errmsg: string;
+      op: IUserTable;
+    };
+    index: number;
+  }
+  interface IResBulkInsert {
+    countSuccess: number;
+    countError: number;
+    detail?: string | IResBulkInsertDataErr[];
+  }
 }

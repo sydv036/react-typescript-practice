@@ -12,6 +12,8 @@ import "@styles/components/admin/user/user.scss";
 import { ApiDeleteUser, ApiGetUserPagination } from "@services/api.user";
 import { DEFAULT_PAGE_SIZE } from "@utils/ValueConstant";
 import UserModalInsertOrUpdate from "./user.modal";
+import { formatDate } from "@utils/FormatDate";
+import ModalImportExcel from "./user.modal.excel";
 
 interface IFilterAndSort {
   current: number;
@@ -35,6 +37,9 @@ const handleFilterAndSort = (params: IFilterAndSort, sort: ISort, filter) => {
   if (params.fullName) {
     query += `&fullName=/${params.fullName}/i`;
   }
+  if (params.startTime && params.endTime) {
+    query += `&createdAt>=${params.startTime}&createdAt<=${params.endTime}`;
+  }
   if (sort.createdAt) {
     if (sort.createdAt === "ascend") {
       query += `&sort=createdAt`;
@@ -45,6 +50,7 @@ const handleFilterAndSort = (params: IFilterAndSort, sort: ISort, filter) => {
   } else {
     query += `&sort=-createdAt`;
   }
+
   return query;
 };
 
@@ -62,6 +68,9 @@ const UserTable = () => {
   const { message } = App.useApp();
 
   const [isLoadingDel, setIsLoadingDel] = useState<boolean>(false);
+
+  const [isOpenModalImportExc, setIsOpenModalImportExc] =
+    useState<boolean>(false);
 
   const hanldeClickType = (v: TActionType) => {
     setIsOpenModalUpdateInsert(true);
@@ -124,11 +133,13 @@ const UserTable = () => {
     },
     {
       title: "Create At",
-      key: "showTime",
       dataIndex: "createdAt",
       valueType: "date",
       sorter: true,
       hideInSearch: true,
+      render(dom, entity, index, action, schema) {
+        return <>{formatDate(entity.createdAt, "DD/MM/YYYY")}</>;
+      },
     },
     {
       title: "Create At",
@@ -161,9 +172,6 @@ const UserTable = () => {
                   className="icon-update"
                 />
               </a>
-            </Spin>
-
-            <Spin spinning={isLoadingDel} size="small">
               <Popconfirm
                 placement="left"
                 title={"Are you sure to delete this task?"}
@@ -244,7 +252,15 @@ const UserTable = () => {
             menu={{
               items: [
                 {
-                  label: "Import Data",
+                  label: (
+                    <span
+                      onClick={() => {
+                        setIsOpenModalImportExc(true);
+                      }}
+                    >
+                      Import Data
+                    </span>
+                  ),
                   key: "1",
                 },
                 {
@@ -267,6 +283,10 @@ const UserTable = () => {
         modalType={modalType}
         userDetail={userDetail!}
         setUserDetail={setUserDetail}
+      />
+      <ModalImportExcel
+        isOpenModalImportExc={isOpenModalImportExc}
+        setIsOpenModalImportExc={setIsOpenModalImportExc}
       />
     </>
   );

@@ -9,6 +9,11 @@ export const ApiInsertUser = (data: IUserInsert) => {
   const BACKEND_URL = `/api/v1/user`;
   return axios.post<IResBackend<IUserTable>>(BACKEND_URL, data);
 };
+
+export const ApiBulkInsertUser = (data: {}[]) => {
+  const BACKEND_URL = `/api/v1/user/bulk-create`;
+  return axios.post<IResBackend<IResBulkInsert>>(BACKEND_URL, data);
+};
 export const ApiUpdateUser = (data: IUserUpdate) => {
   const BACKEND_URL = `/api/v1/user`;
   return axios.put<IResBackend<IResUpdateData>>(BACKEND_URL, data);
