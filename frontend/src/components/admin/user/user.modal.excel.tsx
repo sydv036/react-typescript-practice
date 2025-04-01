@@ -1,5 +1,5 @@
 import { App, Divider, Modal, Table } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import { message, Upload } from "antd";
@@ -35,13 +35,13 @@ const colums = [
 const ModalImportExcel = (props: IProps) => {
   const { isOpenModalImportExc, setIsOpenModalImportExc } = props;
   const { message, notification } = App.useApp();
-  const [dataFileExcel, setdataFileExcel] = useState<{}[]>([]);
-  const [isLoadingModalImportExc, setisLoadingModalImportExc] =
+  const [dataFileExcel, setDataFileExcel] = useState<{}[]>([]);
+  const [isLoadingModalImportExc, setIsLoadingModalImportExc] =
     useState<boolean>(false);
 
   const handleCloseModal = () => {
-    setisLoadingModalImportExc(false);
-    setdataFileExcel([]);
+    setIsOpenModalImportExc(false);
+    setDataFileExcel([]);
   };
 
   const handleReadFileExcel = (file: any) => {
@@ -72,7 +72,7 @@ const ModalImportExcel = (props: IProps) => {
           obj["password"] = "123456";
           return obj;
         });
-        setdataFileExcel(jsonData);
+        setDataFileExcel(jsonData);
       }
     };
   };
@@ -80,6 +80,8 @@ const ModalImportExcel = (props: IProps) => {
   const items: UploadProps = {
     name: "file",
     multiple: false,
+    // accept: ".xlsx, .xls",
+    maxCount: 1,
     action: "",
     beforeUpload: (e) => {
       const allowedTypes = [
@@ -92,11 +94,13 @@ const ModalImportExcel = (props: IProps) => {
       }
       return false;
     },
+    onRemove: () => {
+      setDataFileExcel([]);
+    },
     onChange(info) {
       const { status } = info.file;
       if (status !== "uploading") {
-        const dataExcel = handleReadFileExcel(info.file);
-        console.log("check data excel", dataExcel);
+        handleReadFileExcel(info.file);
       }
       if (status === "done") {
         message.success(`${info.file.name} file uploaded successfully.`);
@@ -108,15 +112,9 @@ const ModalImportExcel = (props: IProps) => {
       console.log("Dropped files", e.dataTransfer.files);
     },
   };
-  const isCheckDataExcel = () => {
-    let isCheck: boolean = true;
-    if (!dataFileExcel) {
-      isCheck = false;
-    }
-    return { disabled: isCheck };
-  };
+
   const handleImportDataExcel = async () => {
-    setisLoadingModalImportExc(true);
+    setIsLoadingModalImportExc(true);
     const res = await ApiBulkInsertUser(dataFileExcel);
     if (res.data?.countSuccess! > 0) {
       if (res.data?.countSuccess === dataFileExcel.length) {
@@ -131,22 +129,26 @@ const ModalImportExcel = (props: IProps) => {
     if (res.data?.countError! > 0) {
       notification.error({
         message: "Inserted failed!",
-        description: Array.isArray(res.data?.detail)
-          ? res.data?.detail!.map((item: IResBulkInsertDataErr) => {
-              return (
-                <>
-                  <div>
-                    Row {item.index + 1} : {item.err.errmsg}
-                  </div>
-                  <br />
-                </>
-              );
-            })
-          : res.data?.detail,
+        description: (
+          <div style={{ maxHeight: "250px", overflowY: "auto" }}>
+            {Array.isArray(res.data?.detail)
+              ? res.data?.detail!.map((item: IResBulkInsertDataErr) => {
+                  return (
+                    <>
+                      <div>
+                        Row {item.index + 1} : {item.err.errmsg}
+                      </div>
+                      <br />
+                    </>
+                  );
+                })
+              : res.data?.detail}
+          </div>
+        ),
         duration: 0,
       });
     }
-    setisLoadingModalImportExc(false);
+    setIsLoadingModalImportExc(false);
   };
 
   return (
@@ -156,7 +158,6 @@ const ModalImportExcel = (props: IProps) => {
       onOk={() => {
         handleImportDataExcel();
       }}
-      //   okButtonProps={isCheckDataExcel()}
       onCancel={() => {
         handleCloseModal();
       }}
@@ -186,7 +187,14 @@ const ModalImportExcel = (props: IProps) => {
       <Divider />
       <section className="readFile">
         <h4>INFO FILE EXCEL</h4>
-        <Table columns={colums} dataSource={dataFileExcel} />
+        <Table
+          columns={colums}
+          dataSource={dataFileExcel}
+          pagination={{
+            pageSize: 3,
+            showSizeChanger: false,
+          }}
+        />
       </section>
     </Modal>
   );

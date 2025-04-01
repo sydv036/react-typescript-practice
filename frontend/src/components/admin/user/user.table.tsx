@@ -161,8 +161,8 @@ const UserTable = () => {
       key: "option",
       render(dom, entity, index, action, schema) {
         return (
-          <div className="user-action">
-            <Spin spinning={isLoadingDel} size="small">
+          <Spin spinning={isLoadingDel} size="small">
+            <div className="user-action">
               <a>
                 <EditOutlined
                   onClick={() => {
@@ -184,8 +184,8 @@ const UserTable = () => {
               >
                 <DeleteOutlined className="icon-delete" />
               </Popconfirm>
-            </Spin>
-          </div>
+            </div>
+          </Spin>
         );
       },
     },
