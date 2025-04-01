@@ -5,6 +5,7 @@ import LoginPage from "@pages/LoginPage";
 import RegisterPage from "@pages/RegisterPage";
 import AdminApp from "@pages/AdminApp";
 import UserTable from "@components/admin/user/user.table";
+import DashBoardAdmin from "@styles/components/admin/dashboard";
 
 const RouterProviders = () => {
   const routers = createBrowserRouter([
@@ -21,7 +22,7 @@ const RouterProviders = () => {
       children: [
         {
           index: true,
-          element: <div>Dasboarh</div>,
+          element: <DashBoardAdmin />,
         },
         {
           path: "user",
