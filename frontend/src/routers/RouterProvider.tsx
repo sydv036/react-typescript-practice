@@ -6,6 +6,7 @@ import RegisterPage from "@pages/RegisterPage";
 import AdminApp from "@pages/AdminApp";
 import UserTable from "@components/admin/user/user.table";
 import DashBoardAdmin from "@styles/components/admin/dashboard";
+import BookTable from "@components/admin/book/book.table";
 
 const RouterProviders = () => {
   const routers = createBrowserRouter([
@@ -30,7 +31,7 @@ const RouterProviders = () => {
         },
         {
           path: "book",
-          element: <div>Book manager</div>,
+          element: <BookTable />,
         },
       ],
     },

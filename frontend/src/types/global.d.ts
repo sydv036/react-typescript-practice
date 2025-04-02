@@ -59,4 +59,10 @@ declare global {
     countError: number;
     detail?: string | IResBulkInsertDataErr[];
   }
+  interface IImage {
+    uid: string;
+    name: string;
+    status: "done" | "error";
+    url: string;
+  }
 }
