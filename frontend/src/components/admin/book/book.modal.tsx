@@ -1,4 +1,6 @@
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
+import { ApiUploadImage } from "@services/api.common";
+import { DisplayImage } from "@utils/DisplayImage";
 import { MessageNotBlank } from "@utils/MessageCommon";
 import {
   App,
@@ -17,6 +19,7 @@ import {
 } from "antd";
 import { UploadProps } from "antd/lib";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface IProps {
   isOpenModalInsertOrUpdate: boolean;
@@ -25,6 +28,29 @@ interface IProps {
   category: string[];
 }
 
+type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
+const normFile = (e: any) => {
+  console.log("Upload event:", e);
+  if (Array.isArray(e)) {
+    return e;
+  }
+  return e && e.fileList;
+};
+const getBase64 = (file: FileType): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+const uploadButton = (
+  <button style={{ border: 0, background: "none" }} type="button">
+    <PlusOutlined />
+    <div style={{ marginTop: 8 }}>Upload</div>
+  </button>
+);
+type TUpload = "single" | "any";
+
 const BookModalInsertOrUpdate = (props: IProps) => {
   const {
     reloadTable,
@@ -32,61 +58,85 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     setsOpenModalInsertOrUpdate,
     category,
   } = props;
-
-  //   useEffect(() => {
-  //     console.log("check category", category);
-  //   });
-
-  type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
-
-  const getBase64 = (file: FileType): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   const { message } = App.useApp();
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState("");
-  const [fileList, setFileList] = useState<UploadFile[]>([
-    {
-      uid: "-1",
-      name: "image.png",
-      status: "done",
-      url: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    },
-  ]);
+  const [previewOpenSingle, setPreviewOpenSingle] = useState(false);
+  const [preview, setPreview] = useState("");
+  const [fileListSingle, setFileListSingle] = useState<UploadFile[]>();
+  const [fileListAny, setFileListAny] = useState<UploadFile[]>();
+  const [formBook] = Form.useForm();
+
+  const handleBeforeUpload = (file: UploadFile) => {
+    const isCheckType = file.type === "image/jpeg" || file.type === "image/png";
+    if (!isCheckType) {
+      message.error("File type must be JPEG or PNG!");
+      return Upload.LIST_IGNORE;
+    }
+    const limitSize = file.size! / 1024 / 1024 < 2;
+    if (!limitSize) {
+      message.error("File size must be less than 2MB!");
+      return Upload.LIST_IGNORE;
+    }
+    return false;
+  };
+
   const handlePreview = async (file: UploadFile) => {
     if (!file.url && !file.preview) {
       file.preview = await getBase64(file.originFileObj as FileType);
     }
-
-    setPreviewImage(file.url || (file.preview as string));
-    setPreviewOpen(true);
+    setPreview(file.url || (file.preview as string));
+    setPreviewOpenSingle(true);
   };
 
-  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
-    setFileList(newFileList);
-    console.log("check on change", newFileList);
-    formBook.setFieldsValue({ thumbnail: "3234234" });
-  };
-
-  const uploadButton = (
-    <button style={{ border: 0, background: "none" }} type="button">
-      <PlusOutlined />
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </button>
-  );
-  const normFile = (e: any) => {
-    console.log("Upload event:", e);
-    if (Array.isArray(e)) {
-      return e;
+  const handleChangeSingle = (
+    { fileList: newFileList },
+    typeUpload: TUpload
+  ) => {
+    if (typeUpload === "single") {
+      setFileListSingle(newFileList);
+      console.log("check on change", newFileList);
+      formBook.setFieldsValue({ thumbnail: newFileList[0].name });
+    } else {
+      setFileListAny(newFileList);
+      console.log("any");
+      console.log("check any", newFileList);
+      formBook.setFieldsValue({ slider: newFileList.join(",") });
     }
-    return e && e.fileList;
+  };
+  const handleUploadThumbnail = async () => {
+    const resUploadImgSingle = await ApiUploadImage(
+      "avatar",
+      fileListSingle[0].originFileObj
+    );
+    if (resUploadImgSingle.data) {
+      let dataPreviewSingle: IImage = {
+        uid: uuidv4(),
+        name: resUploadImgSingle.data?.fileUploaded!,
+        status: "done",
+        url: `${DisplayImage(
+          "avatar",
+          resUploadImgSingle.data?.fileUploaded!
+        )}`,
+      };
+      formBook.setFieldsValue({
+        thumbnail: resUploadImgSingle.data?.fileUploaded,
+      });
+      setFileListSingle([dataPreviewSingle]);
+    } else {
+      Upload.LIST_IGNORE;
+    }
   };
 
-  const [formBook] = Form.useForm();
+  const handleSubmitForm = async () => {
+    await handleUploadThumbnail();
+    console.log("check form", formBook.getFieldsValue());
+  };
+  const handleResetData = () => {
+    setFileListSingle([]);
+    formBook.setFieldsValue({ thumbnail: null });
+  };
+  const handleCloseModal = () => {
+    handleResetData();
+  };
 
   return (
     <Modal
@@ -95,9 +145,13 @@ const BookModalInsertOrUpdate = (props: IProps) => {
       onOk={() => {
         formBook.submit();
       }}
-      onCancel={() => {}}
+      onCancel={handleCloseModal}
     >
-      <Form<IBookInsertOrUpdate> layout="vertical" form={formBook}>
+      <Form<IBookInsertOrUpdate>
+        layout="vertical"
+        form={formBook}
+        onFinish={handleSubmitForm}
+      >
         <Row gutter={[12, 10]}>
           {/* <Col span={12}>
             <Form.Item<IBookInsertOrUpdate>
@@ -160,29 +214,61 @@ const BookModalInsertOrUpdate = (props: IProps) => {
               <Upload
                 action=""
                 listType="picture-card"
-                fileList={fileList}
+                fileList={fileListSingle}
                 onPreview={handlePreview}
-                onChange={handleChange}
+                onChange={(file) => {
+                  handleChangeSingle(file, "single");
+                }}
                 maxCount={1}
-                beforeUpload={() => {
-                  return false;
-                }}
-                onRemove={() => {
-                  formBook.setFieldsValue({ thumbnail: null });
-                }}
+                beforeUpload={handleBeforeUpload}
+                onRemove={handleResetData}
               >
                 {uploadButton}
               </Upload>
-              {previewImage && (
+              {preview && (
                 <Image
                   wrapperStyle={{ display: "none" }}
                   preview={{
-                    visible: previewOpen,
-                    onVisibleChange: (visible) => setPreviewOpen(visible),
-                    afterOpenChange: (visible) =>
-                      !visible && setPreviewImage(""),
+                    visible: previewOpenSingle,
+                    onVisibleChange: (visible) => setPreviewOpenSingle(visible),
+                    afterOpenChange: (visible) => !visible && setPreview(""),
                   }}
-                  src={previewImage}
+                  src={preview}
+                />
+              )}
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item<IBookInsertOrUpdate>
+              label="Slider"
+              name={"slider"}
+              valuePropName="fileList"
+              getValueFromEvent={normFile}
+              rules={[{ required: true, message: MessageNotBlank("Slider") }]}
+            >
+              <Upload
+                action=""
+                listType="picture-card"
+                fileList={fileListAny}
+                onPreview={handlePreview}
+                onChange={(file) => {
+                  handleChangeSingle(file, "any");
+                }}
+                multiple={true}
+                beforeUpload={handleBeforeUpload}
+                onRemove={() => {}}
+              >
+                {uploadButton}
+              </Upload>
+              {preview && (
+                <Image
+                  wrapperStyle={{ display: "none" }}
+                  preview={{
+                    visible: previewOpenSingle,
+                    onVisibleChange: (visible) => setPreviewOpenSingle(visible),
+                    afterOpenChange: (visible) => !visible && setPreview(""),
+                  }}
+                  src={preview}
                 />
               )}
             </Form.Item>
