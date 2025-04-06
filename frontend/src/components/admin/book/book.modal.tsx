@@ -18,6 +18,7 @@ import {
   UploadFile,
 } from "antd";
 import { UploadProps } from "antd/lib";
+import { log } from "console";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -59,7 +60,7 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     category,
   } = props;
   const { message } = App.useApp();
-  const [previewOpenSingle, setPreviewOpenSingle] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [preview, setPreview] = useState("");
   const [fileListSingle, setFileListSingle] = useState<UploadFile[]>();
   const [fileListAny, setFileListAny] = useState<UploadFile[]>();
@@ -68,12 +69,12 @@ const BookModalInsertOrUpdate = (props: IProps) => {
   const handleBeforeUpload = (file: UploadFile) => {
     const isCheckType = file.type === "image/jpeg" || file.type === "image/png";
     if (!isCheckType) {
-      message.error("File type must be JPEG or PNG!");
+      message.error(`File ${file.name} type must be JPEG or PNG!`);
       return Upload.LIST_IGNORE;
     }
     const limitSize = file.size! / 1024 / 1024 < 2;
     if (!limitSize) {
-      message.error("File size must be less than 2MB!");
+      message.error(`File ${file.name} size must be less than 2MB!`);
       return Upload.LIST_IGNORE;
     }
     return false;
@@ -84,58 +85,102 @@ const BookModalInsertOrUpdate = (props: IProps) => {
       file.preview = await getBase64(file.originFileObj as FileType);
     }
     setPreview(file.url || (file.preview as string));
-    setPreviewOpenSingle(true);
+    setPreviewOpen(true);
   };
 
-  const handleChangeSingle = (
-    { fileList: newFileList },
-    typeUpload: TUpload
-  ) => {
+  const handleChange = ({ fileList: newFileList }, typeUpload: TUpload) => {
     if (typeUpload === "single") {
       setFileListSingle(newFileList);
-      console.log("check on change", newFileList);
       formBook.setFieldsValue({ thumbnail: newFileList[0].name });
     } else {
       setFileListAny(newFileList);
-      console.log("any");
       console.log("check any", newFileList);
       formBook.setFieldsValue({ slider: newFileList.join(",") });
     }
   };
-  const handleUploadThumbnail = async () => {
+  const handleUploadImageSingle = async () => {
     const resUploadImgSingle = await ApiUploadImage(
       "avatar",
       fileListSingle[0].originFileObj
     );
     if (resUploadImgSingle.data) {
-      let dataPreviewSingle: IImage = {
-        uid: uuidv4(),
-        name: resUploadImgSingle.data?.fileUploaded!,
-        status: "done",
-        url: `${DisplayImage(
-          "avatar",
-          resUploadImgSingle.data?.fileUploaded!
-        )}`,
-      };
       formBook.setFieldsValue({
-        thumbnail: resUploadImgSingle.data?.fileUploaded,
+        thumbnail: resUploadImgSingle!.data?.fileUploaded,
       });
-      setFileListSingle([dataPreviewSingle]);
-    } else {
-      Upload.LIST_IGNORE;
+    }
+  };
+  // if (resUploadImgSingle!.data) {
+  //   // let dataPreviewSingle: IImage = {
+  //   //   uid: uuidv4(),
+  //   //   name: resUploadImgSingle!.data?.fileUploaded!,
+  //   //   status: "done",
+  //   //   url: `${DisplayImage(
+  //   //     "avatar",
+  //   //     resUploadImgSingle!.data?.fileUploaded!
+  //   //   )}`,
+  //   // };
+  // } else {
+  //   Upload.LIST_IGNORE;
+  // }
+
+  // const handleUploadImageAny = async () => {
+  //   return new Promise((resolve) => {
+  //     let listImageName: string[] = [];
+  //     fileListAny?.forEach(async (file: UploadFile) => {
+  //       const resUploadImgSingle = await ApiUploadImage(
+  //         "avatar",
+  //         file.originFileObj
+  //       );
+  //       console.log("check start");
+
+  //       listImageName.push(resUploadImgSingle.data?.fileUploaded!);
+  //       console.log("check list", listImageName);
+
+  //       formBook.setFieldsValue({ slider: [listImageName] });
+
+  //       console.log("check end");
+  //     });
+  //     resolve(true);
+  //   });
+  // };
+  const handleUploadImageAny = async () => {
+    try {
+      if (!fileListAny || fileListAny.length === 0) return;
+
+      const uploadPromises = fileListAny.map(async (file: UploadFile) => {
+        const res = await ApiUploadImage("avatar", file.originFileObj);
+        return res.data?.fileUploaded;
+      });
+
+      const listImageName = await Promise.all(uploadPromises);
+
+      console.log("Danh sách ảnh đã upload:", listImageName);
+
+      formBook.setFieldsValue({ slider: listImageName });
+
+      return true;
+    } catch (error) {
+      console.error("Lỗi khi upload ảnh:", error);
+      return false;
     }
   };
 
   const handleSubmitForm = async () => {
-    await handleUploadThumbnail();
+    await handleUploadImageSingle();
+    await handleUploadImageAny();
     console.log("check form", formBook.getFieldsValue());
   };
-  const handleResetData = () => {
+  const handleResetFileSingle = () => {
     setFileListSingle([]);
     formBook.setFieldsValue({ thumbnail: null });
   };
+  const handleResetFileAny = () => {
+    setFileListAny([]);
+    formBook.setFieldsValue({ slider: null });
+  };
   const handleCloseModal = () => {
-    handleResetData();
+    handleResetFileSingle();
+    handleResetFileAny();
   };
 
   return (
@@ -217,11 +262,11 @@ const BookModalInsertOrUpdate = (props: IProps) => {
                 fileList={fileListSingle}
                 onPreview={handlePreview}
                 onChange={(file) => {
-                  handleChangeSingle(file, "single");
+                  handleChange(file, "single");
                 }}
                 maxCount={1}
                 beforeUpload={handleBeforeUpload}
-                onRemove={handleResetData}
+                onRemove={handleResetFileSingle}
               >
                 {uploadButton}
               </Upload>
@@ -229,8 +274,8 @@ const BookModalInsertOrUpdate = (props: IProps) => {
                 <Image
                   wrapperStyle={{ display: "none" }}
                   preview={{
-                    visible: previewOpenSingle,
-                    onVisibleChange: (visible) => setPreviewOpenSingle(visible),
+                    visible: previewOpen,
+                    onVisibleChange: (visible) => setPreviewOpen(visible),
                     afterOpenChange: (visible) => !visible && setPreview(""),
                   }}
                   src={preview}
@@ -252,11 +297,13 @@ const BookModalInsertOrUpdate = (props: IProps) => {
                 fileList={fileListAny}
                 onPreview={handlePreview}
                 onChange={(file) => {
-                  handleChangeSingle(file, "any");
+                  handleChange(file, "any");
                 }}
                 multiple={true}
                 beforeUpload={handleBeforeUpload}
-                onRemove={() => {}}
+                onRemove={() => {
+                  handleResetFileAny;
+                }}
               >
                 {uploadButton}
               </Upload>
@@ -264,8 +311,8 @@ const BookModalInsertOrUpdate = (props: IProps) => {
                 <Image
                   wrapperStyle={{ display: "none" }}
                   preview={{
-                    visible: previewOpenSingle,
-                    onVisibleChange: (visible) => setPreviewOpenSingle(visible),
+                    visible: previewOpen,
+                    onVisibleChange: (visible) => setPreviewOpen(visible),
                     afterOpenChange: (visible) => !visible && setPreview(""),
                   }}
                   src={preview}
