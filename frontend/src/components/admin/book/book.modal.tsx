@@ -1,7 +1,9 @@
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
+import { ApiInsertBook, ApiUpdateBook } from "@services/api.book";
 import { ApiUploadImage } from "@services/api.common";
 import { DisplayImage } from "@utils/DisplayImage";
 import { MessageNotBlank } from "@utils/MessageCommon";
+import { DEFAULT_DURATION_COUNTUP, SHOW_PROGRESS } from "@utils/ValueConstant";
 import {
   App,
   Col,
@@ -26,7 +28,10 @@ interface IProps {
   isOpenModalInsertOrUpdate: boolean;
   setsOpenModalInsertOrUpdate: (v: boolean) => void;
   reloadTable: () => void;
-  category: string[];
+  category: {}[];
+  typeHandle: "INSERT" | "UPDATE";
+  bookDetail: IBookTable;
+  setBookDetail: (v: IBookTable | null) => void;
 }
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
@@ -58,13 +63,44 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     isOpenModalInsertOrUpdate,
     setsOpenModalInsertOrUpdate,
     category,
+    typeHandle,
+    bookDetail,
+    setBookDetail,
   } = props;
-  const { message } = App.useApp();
+
+  const { message, notification } = App.useApp();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [preview, setPreview] = useState("");
   const [fileListSingle, setFileListSingle] = useState<UploadFile[]>();
   const [fileListAny, setFileListAny] = useState<UploadFile[]>();
   const [formBook] = Form.useForm();
+  const [isLoadingInsertOrUpdate, setIsLoadingInsertOrUpdate] =
+    useState<boolean>(false);
+  const folderUpload = "book";
+
+  useEffect(() => {
+    if (bookDetail) {
+      formBook.setFieldsValue(bookDetail);
+      console.log("check book detail", bookDetail);
+
+      const thumbnail: UploadFile = {
+        uid: uuidv4(),
+        name: bookDetail.thumbnail,
+        status: "done",
+        url: DisplayImage("book", bookDetail.thumbnail),
+      };
+      const slider: UploadFile[] = bookDetail.slider.map((item) => {
+        return {
+          uid: uuidv4(),
+          name: item,
+          status: "done",
+          url: DisplayImage("book", item),
+        };
+      });
+      setFileListAny(slider);
+      setFileListSingle([thumbnail]);
+    }
+  }, [bookDetail]);
 
   const handleBeforeUpload = (file: UploadFile) => {
     const isCheckType = file.type === "image/jpeg" || file.type === "image/png";
@@ -100,97 +136,106 @@ const BookModalInsertOrUpdate = (props: IProps) => {
   };
   const handleUploadImageSingle = async () => {
     const resUploadImgSingle = await ApiUploadImage(
-      "avatar",
+      folderUpload,
       fileListSingle[0].originFileObj
     );
     if (resUploadImgSingle.data) {
-      formBook.setFieldsValue({
-        thumbnail: resUploadImgSingle!.data?.fileUploaded,
-      });
+      // formBook.setFieldsValue({
+      //   thumbnail: resUploadImgSingle!.data?.fileUploaded,
+      // });
+      return resUploadImgSingle!.data?.fileUploaded;
     }
+    return null;
   };
-  // if (resUploadImgSingle!.data) {
-  //   // let dataPreviewSingle: IImage = {
-  //   //   uid: uuidv4(),
-  //   //   name: resUploadImgSingle!.data?.fileUploaded!,
-  //   //   status: "done",
-  //   //   url: `${DisplayImage(
-  //   //     "avatar",
-  //   //     resUploadImgSingle!.data?.fileUploaded!
-  //   //   )}`,
-  //   // };
-  // } else {
-  //   Upload.LIST_IGNORE;
-  // }
-
-  // const handleUploadImageAny = async () => {
-  //   return new Promise((resolve) => {
-  //     let listImageName: string[] = [];
-  //     fileListAny?.forEach(async (file: UploadFile) => {
-  //       const resUploadImgSingle = await ApiUploadImage(
-  //         "avatar",
-  //         file.originFileObj
-  //       );
-  //       console.log("check start");
-
-  //       listImageName.push(resUploadImgSingle.data?.fileUploaded!);
-  //       console.log("check list", listImageName);
-
-  //       formBook.setFieldsValue({ slider: [listImageName] });
-
-  //       console.log("check end");
-  //     });
-  //     resolve(true);
-  //   });
-  // };
   const handleUploadImageAny = async () => {
     try {
       if (!fileListAny || fileListAny.length === 0) return;
 
       const uploadPromises = fileListAny.map(async (file: UploadFile) => {
-        const res = await ApiUploadImage("avatar", file.originFileObj);
+        const res = await ApiUploadImage(folderUpload, file.originFileObj);
         return res.data?.fileUploaded;
       });
-
       const listImageName = await Promise.all(uploadPromises);
-
-      console.log("Danh sách ảnh đã upload:", listImageName);
-
       formBook.setFieldsValue({ slider: listImageName });
-
-      return true;
+      return listImageName;
     } catch (error) {
-      console.error("Lỗi khi upload ảnh:", error);
-      return false;
+      message.error(`Lỗi khi upload ảnh: ${error}`);
+      return [];
     }
   };
 
   const handleSubmitForm = async () => {
-    await handleUploadImageSingle();
-    await handleUploadImageAny();
-    console.log("check form", formBook.getFieldsValue());
+    setIsLoadingInsertOrUpdate(true);
+    const [thumbnail, slider] = await Promise.all([
+      handleUploadImageSingle(),
+      handleUploadImageAny(),
+    ]);
+
+    if (thumbnail) {
+      console.log("checking thumbnail", thumbnail);
+      formBook.setFieldsValue({ thumbnail: thumbnail });
+    }
+
+    if (slider) {
+      console.log("checking slider", slider);
+      formBook.setFieldsValue({ slider: slider });
+    }
+
+    let res = null;
+    if (typeHandle === "INSERT") {
+      res = await ApiInsertBook(formBook.getFieldsValue(true));
+    } else {
+      res = await ApiUpdateBook(bookDetail._id, formBook.getFieldsValue(true));
+    }
+
+    if (res.data) {
+      message.success(`Inserted book succssfully!`);
+      reloadTable();
+      handleCloseModal();
+    } else {
+      notification.error({
+        message:
+          typeHandle === "INSERT"
+            ? `Insert book failed!`
+            : "Updated book failed!",
+        description: !Array.isArray(res.message)
+          ? res.message
+          : res.message.map((msg) => {
+              return (
+                <div>
+                  <span style={{ color: "red" }}>*</span> {msg}
+                </div>
+              );
+            }),
+        duration: DEFAULT_DURATION_COUNTUP,
+        showProgress: SHOW_PROGRESS,
+      });
+    }
+    setIsLoadingInsertOrUpdate(false);
   };
   const handleResetFileSingle = () => {
     setFileListSingle([]);
-    formBook.setFieldsValue({ thumbnail: null });
   };
   const handleResetFileAny = () => {
     setFileListAny([]);
-    formBook.setFieldsValue({ slider: null });
   };
   const handleCloseModal = () => {
     handleResetFileSingle();
     handleResetFileAny();
+    setsOpenModalInsertOrUpdate(false);
+    formBook.resetFields();
+    setBookDetail(null);
   };
 
   return (
     <Modal
-      title="Add New Book"
+      title={typeHandle === "INSERT" ? "Add New Book" : "Update Book"}
       open={isOpenModalInsertOrUpdate}
       onOk={() => {
         formBook.submit();
       }}
       onCancel={handleCloseModal}
+      loading={isLoadingInsertOrUpdate}
     >
       <Form<IBookInsertOrUpdate>
         layout="vertical"
@@ -198,7 +243,14 @@ const BookModalInsertOrUpdate = (props: IProps) => {
         onFinish={handleSubmitForm}
       >
         <Row gutter={[12, 10]}>
-          {/* <Col span={12}>
+          {typeHandle === "UPDATE" && bookDetail && (
+            <Col span={24}>
+              <Form.Item label="ID">
+                <Input disabled defaultValue={bookDetail._id} />
+              </Form.Item>
+            </Col>
+          )}
+          <Col span={12}>
             <Form.Item<IBookInsertOrUpdate>
               label="Main text"
               name={"mainText"}
@@ -224,7 +276,7 @@ const BookModalInsertOrUpdate = (props: IProps) => {
               name={"category"}
               rules={[{ required: true, message: MessageNotBlank("Category") }]}
             >
-              <Select allowClear options={[category]} />
+              <Select allowClear options={category} />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -244,7 +296,7 @@ const BookModalInsertOrUpdate = (props: IProps) => {
             >
               <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
-          </Col> */}
+          </Col>
           <Divider />
           <Col span={12}>
             <Form.Item<IBookInsertOrUpdate>
