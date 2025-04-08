@@ -16,8 +16,7 @@ export const ApiInsertBook = (data: IBookInsertOrUpdate) => {
 };
 
 export const ApiUpdateBook = (id: string, data: IBookInsertOrUpdate) => {
-  console.log("check id", id);
-  console.log("check data", data);
+  console.log("check data api update book", data);
 
   const URL_BACKEND = `/api/v1/book/${id}`;
   return axios.put<IResBackend<IResUpdateData>>(URL_BACKEND, data);

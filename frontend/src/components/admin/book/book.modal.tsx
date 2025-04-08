@@ -176,8 +176,9 @@ const BookModalInsertOrUpdate = (props: IProps) => {
       formBook.setFieldsValue({ thumbnail: thumbnail });
     }
 
-    if (slider) {
-      console.log("checking slider", slider);
+    console.log("checking isSlider", slider?.length);
+    // console.log("checking isSlider", );
+    if (slider?.length! > 0) {
       formBook.setFieldsValue({ slider: slider });
     }
 
@@ -185,11 +186,24 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     if (typeHandle === "INSERT") {
       res = await ApiInsertBook(formBook.getFieldsValue(true));
     } else {
-      res = await ApiUpdateBook(bookDetail._id, formBook.getFieldsValue(true));
+      const data: IBookInsertOrUpdate = formBook.getFieldsValue(true);
+      res = await ApiUpdateBook(bookDetail._id, {
+        author: data.author,
+        category: data.category,
+        mainText: data.mainText,
+        price: data.price,
+        quantity: data.quantity,
+        thumbnail: data.thumbnail,
+        slider: data.slider,
+      });
     }
 
     if (res.data) {
-      message.success(`Inserted book succssfully!`);
+      message.success(
+        typeHandle === "INSERT"
+          ? `Inserted book succssfully!`
+          : "Updated book successfully!"
+      );
       reloadTable();
       handleCloseModal();
     } else {
