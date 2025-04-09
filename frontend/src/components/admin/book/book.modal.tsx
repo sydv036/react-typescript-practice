@@ -81,8 +81,6 @@ const BookModalInsertOrUpdate = (props: IProps) => {
   useEffect(() => {
     if (bookDetail) {
       formBook.setFieldsValue(bookDetail);
-      console.log("check book detail", bookDetail);
-
       const thumbnail: UploadFile = {
         uid: uuidv4(),
         name: bookDetail.thumbnail,
@@ -135,29 +133,41 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     }
   };
   const handleUploadImageSingle = async () => {
-    const resUploadImgSingle = await ApiUploadImage(
-      folderUpload,
-      fileListSingle[0].originFileObj
-    );
-    if (resUploadImgSingle.data) {
-      // formBook.setFieldsValue({
-      //   thumbnail: resUploadImgSingle!.data?.fileUploaded,
-      // });
-      return resUploadImgSingle!.data?.fileUploaded;
+    if (fileListSingle[0].originFileObj !== undefined) {
+      const resUploadImgSingle = await ApiUploadImage(
+        folderUpload,
+        fileListSingle[0].originFileObj
+      );
+      if (resUploadImgSingle.data)
+        return resUploadImgSingle!.data?.fileUploaded;
+    } else {
+      return bookDetail.thumbnail;
     }
-    return null;
   };
   const handleUploadImageAny = async () => {
     try {
       if (!fileListAny || fileListAny.length === 0) return;
-
-      const uploadPromises = fileListAny.map(async (file: UploadFile) => {
-        const res = await ApiUploadImage(folderUpload, file.originFileObj);
-        return res.data?.fileUploaded;
-      });
+      const dataMap = new Map<string, string>();
+      if (bookDetail) {
+        bookDetail.slider.forEach((item) => {
+          dataMap.set(item, item);
+        });
+      }
+      const uploadPromises = fileListAny.map(
+        async (file: UploadFile, index) => {
+          if (file.originFileObj !== undefined) {
+            const res = await ApiUploadImage(folderUpload, file.originFileObj);
+            return res.data?.fileUploaded;
+          } else {
+            const isCheck = dataMap.get(file.name);
+            if (isCheck) {
+              return isCheck;
+            }
+          }
+        }
+      );
       const listImageName = await Promise.all(uploadPromises);
-      formBook.setFieldsValue({ slider: listImageName });
-      return listImageName;
+      return listImageName ? listImageName : [];
     } catch (error) {
       message.error(`Lỗi khi upload ảnh: ${error}`);
       return [];
@@ -172,12 +182,9 @@ const BookModalInsertOrUpdate = (props: IProps) => {
     ]);
 
     if (thumbnail) {
-      console.log("checking thumbnail", thumbnail);
       formBook.setFieldsValue({ thumbnail: thumbnail });
     }
 
-    console.log("checking isSlider", slider?.length);
-    // console.log("checking isSlider", );
     if (slider?.length! > 0) {
       formBook.setFieldsValue({ slider: slider });
     }
@@ -365,6 +372,7 @@ const BookModalInsertOrUpdate = (props: IProps) => {
                 onChange={(file) => {
                   handleChange(file, "any");
                 }}
+                maxCount={8}
                 multiple={true}
                 beforeUpload={handleBeforeUpload}
                 onRemove={() => {
