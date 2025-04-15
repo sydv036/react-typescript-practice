@@ -112,7 +112,6 @@ const BookTable = () => {
     {
       title: "ID",
       dataIndex: "_id",
-      copyable: true,
       ellipsis: true,
       hideInSearch: true,
     },

@@ -12,7 +12,7 @@ import "@styles/components/admin/user/user.scss";
 import { ApiDeleteUser, ApiGetUserPagination } from "@services/api.user";
 import { DEFAULT_PAGE_SIZE } from "@utils/ValueConstant";
 import UserModalInsertOrUpdate from "./user.modal";
-import { formatDate } from "@utils/FormatDate";
+import { formatDate } from "@utils/FormatCommon";
 import ModalImportExcel from "./user.modal.excel";
 
 interface IFilterAndSort {
