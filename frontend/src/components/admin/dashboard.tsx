@@ -1,4 +1,3 @@
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { ApiGetDashBoard } from "@services/api.admin";
 import { DEFAULT_DURATION_COUNTUP } from "@utils/ValueConstant";
 import { Card, Col, Row, Spin, Statistic, StatisticProps } from "antd";
